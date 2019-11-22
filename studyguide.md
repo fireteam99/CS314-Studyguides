@@ -566,6 +566,12 @@ Assuming our languages contains {a, b}:
 * S --> bSb
 
 ### Parse Trees
+* Common way to show a string is part of the language for a CFG
+* The children of each node are the symbols for a particular rule
+* The root is the starting non-terminal
+* Reading nodes left to right gives the original string
+
+**Parsing the palindrome example:**
 
 ```
 S = "aabbaa"
@@ -573,5 +579,67 @@ a - S - a
 a - a - S - a - a
 a - a - b - S - b - a - a
 a - a - b - ε - b - a - a
+```
+
+### Ambiguity
+* Parse trees are not garunteed to be unique
+* If a grammar allows multiple parse trees, it is ambiguous
+* Ambiguoity is fine for recognizing but not for interpreting strings
+
+
+## Logical Programming
+
+### Intro to Logical Programming
+* A program is logical specification of desired result
+ * Describe facts and rules
+ * Solver uses facts and rules to determine new facts
+* For a problem, a logic program describes what properties the answer must have
+
+### Relations
+* Relations either hold or don't hold
+* A single relation can do the work of multiple functions
+
+### Variables
+* Variables in Prolog are initially *free* - which means they could have any value
+* Goals and rules serve to constrain variables
+	* X = 2 - means X must equal 2
+	* X * X #= 4 - means that X must be some value who's square is 4 
+
+### Prolog Syntax
+* Everything in Prolog is a term
+* A term includes:
+	* An atom - similar to string literal
+  		* A word starting with lower-case letter, number, combination of punctuation characters, or anything in single quotes
+  		* Ex: `a`, `atom`, `42`, `hello there`
+	* A variable - a word beginning with a capital letter or "_"
+		* Ex: `X`, `Y2K`, `_100`, `Path`, `Hello_world`
+	* An atom with arguments (can be any term)
+		* Ex: `foo(bar)`, `square(2, X)`
+		* These are not function calls
+		* Some atoms can be infix operators like `1 + 2` same as `+(1, 2)`
+
+### Term Are Tree
+* Terms can be represented as trees
+* Ex: `person(name('John', 'Smith'), date(1785,6,2), deceased)`
 
 ```
+             person
+      /        |     \ 
+   name       date   deceased
+ /   |       /   |  \
+John Smith 1785  6   2
+```
+
+### Facts
+* A fact is a term that is present in Prolog's database of facts
+* A Prolog source states facts by writing a term followed by a period.
+	* food(apple). - States that apple is a food
+	* beats(rock, scissors) - States rock beats scissors
+	* beats(bomb, Anything) - States bomb beats a variable "Anything" so basically anything
+
+### Rules
+* A rule states that a term (consequent) is a fact if other terms (antecedents) are facts
+	* eats(johnny, Something) :- food(Something).
+	* Means that Johnny is eating if the thing he is eating is food.
+	* grandparent(GC, GP) :- parent(GC, P), parent(P, GP).
+	* GP is a grandparent of GC if for any P, P is a parent of GC and GP is a parent of P 
