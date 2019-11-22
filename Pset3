@@ -1,0 +1,75 @@
+CS 314 / Fall 2019 / Problem Set 3
+==================================
+
+1. Recall our binary tree type:
+
+    data Tree a = Tip | Bin (Tree a) a (Tree a)
+
+Write a function treeToList :: Tree a -> [a] which returns a list containing
+all the node labels in a tree, in order from left to right.
+
+    treeToList (Bin (Bin Tip 1 Tip) 2 Tip) = [1,2]
+    treeToList (Bin (Bin Tip 2 Tip) 0 (Bin (Bin Tip 3 Tip) 1 Tip)) = [2,0,3,1]
+
+    treeToList Tip = []
+    treeToList (Bin l n r) = treeToList l ++  [n] ++ treeToList r
+
+2. Consider this type declaration:
+
+    data Bounded a = Bot | Val a | Top deriving (Show, Eq, Ord)
+
+What is the relation between the types a and Bounded a? For example, how
+is Bounded Integer different from Integer?
+
+A Bounded Integer is an interval where Bot is always less than a value x and Top is 
+always larger than value x. This only effects comparisons.
+
+3. Consider the following functions. (Ideally, create a Haskell source file
+containing the function and the definitions of Tree and Bounded and experiment
+with them.)
+
+    validBST :: (Ord a) => Tree a -> Bool
+    validBST t = checkBSTRange Bot t Top
+
+    checkBSTRange :: (Ord a) => Bounded a -> Tree a -> Bounded a -> Bool
+    -- Base case
+    checkBSTRange bot Tip         top = True
+    -- Recursive check
+    checkBSTRange bot (Bin l x r) top
+        =  bot < Val x -- current node is greater than left child
+        && Val x < top -- current node is less than right child
+        && checkBSTRange bot l (Val x) -- recursively call on left sub tree passing l
+        && checkBSTRange (Val x) r top -- recursively call on right sub tree passing r
+
+Explain how this function works. What property does checkBSTRange determine?
+Would a definition that didn't involve Bounded be simpler or more complex?
+
+The algorithm checks to see if a parent is greater than the left subtree and smaller
+than the right subtree.
+
+4. It is possible to use foldr to define foldl. For example:
+
+    my_foldl :: (b -> a -> b) -> b -> [a] -> b
+    my_foldl f z xs = foldr (\x k y -> k (f y x)) (\y -> y) xs z
+    my_foldl f z xs = foldr (\x k y -> k (f y x)) y xs z
+    my_foldl f z xs = foldr (\x k y -> k (f y x)) y xs z
+    
+Notice that the combining function passed to foldr takes three arguments.
+How is this possible?
+
+
+
+5. Using evaluation by substitution, show that my_foldl f w (x:y:z:[]) evaluates
+to f (f (f w x) y) z as expected.
+
+foldr (\x k y -> k (f w (x:y:z:[])))
+
+6. (Challenge) Use foldl to define my_foldr. Can my_foldr be used everywhere
+that foldr can?
+
+f g x = (f g) x
+f $ g x = f (g x)
+
+filter (even . first)
+
+filter (\x even (first x))

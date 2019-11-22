@@ -1,0 +1,63 @@
+CS 314 / Fall 2019 / Problem Set 2
+==================================
+
+
+1. Without looking at the source for replicate, write your own function that
+takes a non-negative integer n and an item x and returns an n-element list
+of copies of x. (That is, replicate 3 True = [True, True, True].)
+
+    replicate :: Integer -> a -> [a]
+    replicate 0 a = []
+    replicate n a = n : replicate n - 1 a
+
+    replicate :: Integer -> a -> [a]
+    replicate 0 a = []
+    replicate n a = [n] ++ replicate n - 1 a
+    
+How many ways can you write it?
+    2 ways
+
+2. foldr and foldl capture the essence of recursion for lists. We can write
+analogous functions for natural numbers. For example
+
+    foldNatR :: (a -> a) -> a -> Integer -> a
+    foldNatR f z n = if n < 1 then z else f (foldNatR f z (n - 1))
+
+This performs structural induction on a natural number, given a combining
+function f and a base case z. (Negative integers are treated as zeros.)
+
+Write an function foldNatL which accumulates a return value, analogously to
+foldl.
+    
+    foldNatL :: (a -> a) -> a -> Integer -> a
+    foldNatL f z 0 = z
+    foldNatL f z n = foldNatL f z `f` n
+
+
+3. In what ways, if any, are foldNatR and foldNatL different?
+foldNatR will return an answer immediatly but foldNatL will return a thunk
+
+4. Write factorial using either foldNatR or foldNatL.
+factorial n = foldNatR (*) 1 n 
+
+5. We can write a function to generalize induction over binary trees.
+Consider this type:
+
+    data Tree a = Tip | Bin (Tree a) a (Tree a)
+
+    a) A foldTree function will need to consider one or more base cases and
+    recursive cases. How many of each should there be?
+
+    b) For each base case, foldTree will take a value to return. For each
+    recursive case, it will take a combining function. Assuming the type of
+    the tree element is a and the type of the answer is b, what will the types
+    of the combining function(s) be?
+    
+    c) Write foldTree.
+
+    foldTree f z Tip = z
+    foldTree f z (Bin l n r) = f (foldTree f z l) x (foldTree f z r)
+
+    foldTree (+) 0 Bin (Bin (Tip 2 Tip) 5 Bin (Tip 3 Tip))
+    (+) (foldTree (+) 0 Bin) (Tip 2 Tip) 5 (foldTree (+) 0 Bin (Tip 3 Tip))
+    

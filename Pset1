@@ -1,0 +1,86 @@
+CS 314 / Problem Set 1
+
+1. Write a function that takes three integer parameters, x, y and z.
+When x is negative, it should return y. Otherwise it should return z.
+
+    f :: Integer -> Integer -> Integer -> Integer
+    f x y z
+        | x < 0 = y
+        | otherwise = z
+
+    f x y z if x < 0 then y else z
+
+2. Consider this data type, which has a single constructor with three fields:
+
+    data IBC = MakeIBC Int Bool Char
+
+Write functions first, second, and third which take an IBC and return its
+first, second, or third field, respectively.
+
+first :: MakeIBC -> Int
+first (MakeIBC x _ _) = x
+
+second :: MakeIBC -> Bool
+second (MakeIBC _ y _) = y
+
+third :: MakeIBC -> Char
+third (MakeIBC _ _ z) = z
+
+
+3. For any type T, we can use Maybe to construct the type Maybe T, which will
+contain a value corresponding to every value in T, and one additional value.
+
+    data Maybe a = Nothing | Just a
+
+For example, there are two Bool values: True and False. There are three
+Maybe Bool values: Just True, Just False, and Nothing.
+
+Recall the Color type we defined in class:
+
+    data Color = Red | Green | Blue
+    
+Write every value of type Maybe Color.
+Just Red, Just Green, Just Blue, Nothig
+
+
+4. Write every value of type Maybe (Maybe Color).
+Just Just Red
+Just Just Green
+Just Just Blue
+Just Nothing
+Nothing
+
+
+5. Consider this type which encodes a binary tree:
+
+    data Tree a = Tip | Bin (Tree a) a (Tree a)
+
+    a) How many constructors does this have?
+    b) How many fields does each constructor have?
+    c) Write at least three distinct values of type Tree Int
+    
+    a) 2 constructors
+    b) Tip has 0 fields, Bin has 3 fields
+    
+6. Maybe is often used to add an extra return value indicating failure or some
+other exceptional condition. For example, we might want to write functions that
+return the left or right subtrees of a binary tree, or the value at the node,
+but it is not clear what these could return for an empty tree. One solution is
+to use Maybe to provide a "default" value to return when the tree is empty.
+
+Write these functions
+
+    root   :: Tree a -> Maybe a
+    -- root returns the element at the root of a binary tree, when the tree is
+    -- non-empty
+    
+    left  :: Tree a -> Maybe (Tree a)
+    -- left returns the left child of the root of a binary tree, when the tree
+    -- is non-empty
+    
+    right :: Tree a -> Maybe (Tree a)
+    -- right returns the right child of the root of a binary tree, when the tree
+    -- is non-empty
+
+
+    
