@@ -139,6 +139,7 @@ x       x
 	* λx indicates that x is the parameter
 	* x * 2 + 3 is the function body
 	* The parentheses indicate the *binding scope* of x
+![function-abstraction](images/function-abstraction.png)
 
 ### α-Equivalence
 * The name of bound variables are not considered significant so (λx. x * 2 + 3) and (λy. y * 2 + 3) are considered the same
@@ -161,6 +162,27 @@ x       x
 * If we evaluate the application first then we get normal-order evaluation (substituting the argument first)
 * They both produce the same result
 
+### Applicative Order
+* We prioritize calculating the arguments of a function over substituting them in.
+
+```
+(λx. x * 2 + 3)(2 + 1)
+(λx. x * 2 + 3)(3)
+3 * 2 + 3
+6 + 3
+9
+```
+### Normal Order
+* We prioritize subtituting the arguments of a function over calculating them.
+
+```
+(λx. x * 2 + 3)(2 + 1)
+(2 + 1) * 2 + 3
+3 * 2 + 3
+6 + 3
+9
+```
+
 ### Multiple Parameters
 * We can apply multiple parameters to a function by returning a function after applying the first argument, to apply the second one
 * Lets say we want to define a function where given x and y, return (x + y) / 2
@@ -179,12 +201,29 @@ x       x
 * If no β-reduction is possible, then we are in β-normal form
 * If the head of the expression is not an application then the expression is in head-normal form
 
+### Head Normal Form
+* The simpliest form of a particular expression
+* There are no thunks inside
+* Same thing as reduced normal form or just normal form
+* Examples:
+	* 7
+	* λx. (x + 2)
+
+### Beta Normal Form
+* There are no beta reductions that can be applied
+* Every function application was evaluated and there is nothing to reduce
+
+### Non-termination
+* Not every lambda expression has a normal form
+* Consider (λx. x x) (λx. x x)
+* It ends up reducing to itself!
+
 ## Haskell
 
 ### Basic Syntax
 * Expressions: `1 + 1`, `3 * (5 - 2) / 3`
 * Annonymous functions (lambda abstractions): `\x -> 3 * 5 + 1`
-* Variables in haskell must begin with a lower case letter or `_`
+* Variables in haskell must begin with a lowercase letter or `_`
 
 ### Definitions
 * Defining a variable: `a = 5`
@@ -196,11 +235,644 @@ x       x
 * We can use `if <some boolean expression> then <statement a> else <statement b>` to choose between values
 	* We must always include both branches
 
+```haskell
+fun :: Int -> Int -> Int -> Int
+fun x y z = if x < 0 then y else z
+```
+
+### Pattern Guards
+* Alternative to using if-then-else
+* Takes the form of `| <boolean expression> = <some statement>`
+
+```haskell
+fun :: Int -> Int -> Int -> Int
+fun x y z
+  | x < 0 = y
+  | otherwise = z
+```
+
 ### Writing Functions
 * Given the following function to calculate factorials: `fac n = if n > 1 then n * fac (n - 1) else 1` we can see that if n is greater than one we recurse and otherwise we just return 1 as the base case
 
+```
+fac 3
+if 3 > 1 then 3 * fac (3 - 1) else 1
+3 * fac (3 - 1)
+3 * (if (3 - 1) > 1 then 3 * fac ((3 - 1) -1) else 1)
+3 * (if 2 > 1 then 2 * fac (2 - 1) else 1)
+3 * (2 * fac (2 - 1))
+3 * (2 * (if (2 - 1) > 1 then (2 - 1) * fac ((2 - 1) - 1) else 1)) 
+3 * (2 * (if 1 > 1 then 1 * fac (1 - 1) else 1)) 
+3 * (2 * 1) 
+6
+```
+
+* Notice that haskell always waits for the last possible moment to perform any calculations
+
 ### Lists
-* []
+* `[]` - empty list
+* `[1, 2, 3]` - list with elements
+* `[1..10]` - list with a range of elements
+* `[1, 3..10]` - a list with a range and a step `[1, 3, 5, 7, 9]`
+* `[ x^2 | x <- [1..10] ]` - list comprehension
+	* Each element in the list is x^2, where x is an element in `[1..10]`
+* `[ x * y | x <- some_list, y <- some_other_list ]`
+	* Generate a list where each element is the multiple of the corresponding elements in some list and some other list. 
+
+### Creating Lists
+* We can use `++` to combine two lists
+	* `[1, 2, 3] ++ [4, 5] = [1, 2, 3, 4, 5]`
+* Use concat to combine a list of lists into a single list
+	* `concat [[1, 2], [3, 4], [5], []] = [1, 2, 3, 4, 5]`
+* Use `:` to add a single element to the beginning of a list
+	* `1 : [2, 3] = [1, 2, 3]`
+	* `1 : 2 : 3: [] = [1, 2, 3]`  
+
+### Using Lists
+* Useful functions for lists
+	* `null x` - returns True when x is empty, False otherwise
+	* `length x` - returns the number of elements in x
+	* `sum x` - returns the total of all the items in x
+* Many are higher-order functions
+	* `map f x` - returns a new list produced by applying f to every element in x
+		* map (\x -> x * 2) [1, 2, 3] = [2, 4, 6]
+	* `filter f x` - returns a new list containing the items in x that satisfy f
+		* filter even [1, 2, 3, 4] = [2, 4]
+* Suppose we wanted to write a function that gets the sum of the square of numbers from 1 to n
+	* Start with a set of values `[1..n]`
+	* For each value, we compute x^2 `map (\x -> x^2) [1..n]`
+	* Now we find the sum of all the values `sum ((\x -> x^2) [1..n])`
+	* Abstract into a function `sumSquares n = sum ((\x -> x^2) [1..n])`
+
+### List Constructors
+* `[]` nil
+* `:` cons
+
+### Pattern Matching
+* We can use a pattern when defining a function
+	* `swap (x, y) = (y, x)` 
+	* Here, the `(x, y)` on the left is a pattern that binds two variables
+* Wildcard pattern `_` matches anything but does not bind a variable
+
+### Refutable Patterns
+* Patterns like `_` and `x` are irrifutable which means they match any possible input
+* Most patterns can potentially fail
+	* `[]` only matches the empty list
+	* `(1, x)` only matches pairs where the first element is 1
+
+### Mutiple Cases
+* Functions with refutable patterns may crash if none of them match
+* The `case..of` operator can be used to select a pattern that matches a value
+* If multiple cases match only the first one is used
+
+```haskell
+foo x = case x of
+	[] -> "zero"
+	[x] -> "one"
+	[x, y] -> "two"
+	_ -> "many"
+	
+foo [] = "zero"
+foo [x] = "one"
+foo [x, y] = "two"
+foo [x, y, z] = "many"
+foo _ = "many"
+
+```
+
+### Strings
+* Haskell's built in String type is a list of Chars
+	* `"abc"`
+	* `['a', 'b', 'c']`
+	* `'a' : 'b' : 'c' : []`
+	* `'a' : "bc"`
+* Not very efficient
+
+### Pairs
+* Bundles two values together
+	* `(1, 2)` is a pair of integeres
+	* `('a', True)` is a pair of a Char and a Bool 
+	* `((1, 2), [3, 4])` a pair that contains another pair and a list
+	* `[(1, 'a'), (2, 'b')]` a list that contains pairs of numbers and characters
+
+### Working with pairs
+* `fst` maps a pair to its first element
+	* `fst (1,'a') = 1`
+* `snd` maps a pair to its second element
+	* `snd (1, 'a') = 'a'`
+* `swap p = (snd p, fst p)`
+	* `swap ('a', 2) = (2, 'a')`   
+
+### Pattern Matching
+
+
+### Evaluation Order
+* In haskell we use lazy evaluation to avoid unnecessary re-computation
+* Also called *call-by-need*
+
+### Normal-order vs Lazy
+* Applicative-order (eager evaluation) always evalautes the arguement before calling function
+	* Arguments are evaluated exactly once
+* Normal-order evaluation substitues the argument sub-expression without evaluating	* Arguments may be evaluated zero or more times
+* Lazy evaluation substitutes the argument without evaluating, but avoids duplication
+	* Arguments may be evaluated zero or one times
+
+### Eager vs Lazy
+* Haskell is lazy by default
+* There are ways to request eager evaluation
+
+### $ Operator
+* Applies its first argument to its second argument
+	* `f $ x` is equivalent to `f x` 
+* Kind of similar to chaining in lodash
+* Helps avoid deeply nested parentheses
+	* `f (g (h x))` becomes `f $ g $ h x` 
+
+### Operators
+* Includes: `+`, `*`, etc...
+* Section syntax can turn operators into functions
+* Enclose operator in parentheses and omit one or both arguments
+	* `(+ 1)` means `(\x -> x + 1)`
+	* `(2 *)` means `(\x -> 2 * x)` 
+	* `(+)` means `(\x y -> x + y)`
+* Functions that take two ore more arguments can be used as operators by eclosing function name in backticks (`)
+* x \`mod\` 2 is equivalent to mod x 2
+
+### Precedence and Fixity
+* Operators in Haskell have precedence, and may associate to the left or the right
+* infixl and infixr determine how operators with the same precedence get parenthesized
+
+### User-Defined Operators
+* Haskell operators are defined within the language
+* Any syntaxes for using an operator can be used to define one
+* We can explicitly provide precedence and associativity
+
+```haskell
+a |~| b = (a + b) / 2
+(|~|) a b = (a + b) / 2
+infix 6 |~|
+```
+
+### Types
+* Haskell is strongly typed
+* We use `::` to explicitly give a type to an expression
+	* `5 :: Integer`
+* Built in types include:
+	* Int
+	* Integer
+	* Char
+	* Float
+	* Double
+	* Bool
+	* Function types like IO, and others...  
+
+### Function Types
+* A function's type indentifies the types of it's arguments and it's result
+* We write the type using an arrow: `domain --> co-domain`
+	* `even :: Integer -> Bool`
+* The arrow associate to the right
+* Higher order functions require parentheses to indicate function arguments
+	* `(\f -> f 0 + f 1) :: (Integer -> Integer) -> Integer`
+	* Here we use parentheses to define a higher order function that takes in an integer and returns an integer that should be passed as an argument 
+
+### Lists and Tuples
+* List types are designated with brackets
+	* `[Integer]` - list of integers
+	* `[Char]` - list of characters
+* Tuple types resemble syntax for tuple values
+	* `(5, "Hello") :: (Integer, String)`
+
+### Polymorphism
+* Sometimes we don't want to restrict ourselves to a single type
+* Lets say we want to make a function that can reverse any type of list
+* `reverse :: [a] -> [a]`
+* The `a` is a type variable which means it could be any type and will return a list of the same type
+
+### Qualified Polymorphism
+* some functions are polymorphic but can't be applied to every type
+* `(+) :: (Num a) => a -> a -> a`
+* Here we say that the `+` operator is defined for every type `a` that is number like
+
+### Type Classes
+* A class defines a set of values that must be defined for any member of the class
+* An instance gives definition for a particular type
+* Note that the classes contain types and not values
+
+### Defining a Simple Type
+* Define a type using `data` operator and listing its values
+	* `data Bool = True | False`
+	* Here we have a boolean type that can be either True or False
+	* `data Ordering = LT | EQ | GT` 
+	* Here we have an ordering type that cean be LT, EQ, or GT
+
+### Complex Types
+* Types can be defined with internal structure
+	* `data TwoInts = TI Int Int`
+* Here, TI is a data constructor
+	* We can apply it to two integers to get a TwoInts value `TI 5 6`
+	* We can also use it for pattern matching `foo (TI x y)`
+* A type can have multiple constructors which may have different types
+	* `data IntOrStr = AnInt Int | AStr String`
+	* Here we have a type IntOrStr that can either be an AnInt followed by a integer literal or an AStr followed by a string literal
+	* `data MaybeInt = NoInt | SomeInt Int`
+	* Here we have a type MaybeInt that can either be the value NoInt or SomeInt followed by an integer literal
+
+### Types with Equality
+* Haskell's `==` is restricted to work with types in Eq class
+	* Some types need type-specific definitions for ==
+	* A Set type that uses a binary search tree would want `==` to be based on set membership and not tree structure
+
+### Structural Equality
+* Two values are equal iff they have the same constructor and all corresponding fields are equal
+* Structural equality is very common so in Haskell we can derive it using Eq
+
+### Deriving Instances
+* Eq is derived to test equality
+* Show and Read are derived to convert a value to and from a String
+* Ord is derived to give an ordering based on strucutre and the order in which constructers were declared
+	* Provides functions such as `(<)` and `compare`
+	* Given `data Color = Red | Green | Blue deriving Ord`, our ordering is Red < Green < Blue 
+
+### Creating a Custom Set
+* Useful functions
+	* `nub` removes duplicates elements from a list
+	* `elem` tests whether an element is present in a list
+	* `union` combines two lists and removes duplicates in the second list
+* Create a Set type that can store any type `data Set a = SetItems [a]`
+#### Insertion
+* We can use `elem` to check if an item is already in the set
+
+```haskell
+insert x (SetItems xs) = 
+	| x `elem` xs = SetItems xs
+	| otherwise = SetItems (x:xs)
+```
+
+#### Other Functions
+* Create an empty set
+	* `empty = SetItems []`
+*  Membership testing	
+	* `in x (SetItem xs) = elem x xs`
+* Getting a list of elements
+	* `members (SetItem xs) = xs`  
+
+### Set Equality
+* We do not want to use structural equality
+	* `setItems [1, 2]` and `setItems [2, 1]` are not structurally equal, but represent the same set	
+* We need to write a custom implementation of `==`
+* `all :: (a -> Bool) -> [a] -> Bool` checks whether every element of a list statisfies a condition via a user defined boolean function
+	* `all even [2,4,6]` returns True
+* We can use `all` in conjunction with `elem`
+* Our implementation must be bidirectional - everything in Set A must be in Set B and everything in Set B must be in Set A
+
+```haskell
+setEqual (SetItems xs) (SetItems ys) = 
+	all (\x -> x `elem` ys) xs &&
+	all (\y -> y `elem` xs) ys
+```
+
+### Recursive Definitions
+* Lists are a recursive structure
+	* Either empty, or an item followed by a list
+* We can define functions to work on lists by following this recursive strucutre (structural induction) 
+* For an empty list we return an empty set
+	* `fromList [] = empty`
+* For a non-empty list x : xs
+	* Find the set of the corresponding tail `fromList xs`
+	* Use our insert function to add x to that set
+	* `fromList (x : xs) = insert x (fromList xs)`
+
+### Folding
+* The pattern of structural induction can be generalized
+* A fold generally has a combining function. and a data structure (usually a list)
+* Given a hypothetical function `fold` lets write `fold (+) [1,2,3,4,5]`, we can think of folding as replacing all the `,` with `+` resulting in `1 + 2 + 3 + 4 + 5`, which reduces our list down to a single value `15`.
+* `+` is an associative operation so parentheses don't matter - but usually it does matter
+* There are two ways to carry out a fold on a list
+	* **Right Fold**: Recursively combining the first element with the results of combining the rest
+		*  `(1+(2+(3+(4+5))))`
+	* **Left Fold**: Recursively combining the the result of combining all but the last element with the last one
+		*  `((((1+2)+3)+4)+5)`
+
+### Foldr
+
+```haskell
+-- if the list is empty, the result is the initial value z; else
+-- apply f to the first element and the result of folding the rest
+foldr f z []     = z 
+foldr f z (x:xs) = f x (foldr f z xs) 
+
+```
+* `foldr` lets us write structural induction by providing the base case and combining function
+* `foldr :: (a -> b -> b) -> b -> [a] -> b`
+* Example: summing the elements of a list
+	* `foldr (\item sum -> item + sum) 0 list`
+	* Starting at 0, we successively add every item in the list to it
+	* `foldr (+) 0`
+	* Can be simplified to use (+)
+
+### Foldl
+
+```haskell
+-- if the list is empty, the result is the initial value; else
+-- we recurse immediately, making the new initial value the result
+-- of combining the old initial value with the first element.
+foldl f z []     = z                  
+foldl f z (x:xs) = foldl f (f z x) xs
+```
+
+* `foldl` lets us write accumulation on lists by providing an initial value and accumulation function
+* It is very similar to how a loop works in an imperative language
+
+```haskell
+foldl (+) 0 (1:2:3:4:[])
+foldl (+) 1 (2:3:4:[])
+foldl (+) 3 (3:4:[])
+foldl (+) 6 (4:[])
+foldl (+) 10 []
+10
+```
+
+### Trees
+* Consider a node-labled binary tree
+* `data Tree a = Tip | Bin (Tree a) a (Tree a)`
+* There are two cases an empty `Tip` and non-empty `Bin`
+	* `Bin` has two recursive fields which represent the left right subtrees
+#### Tree Height
+* We can calculate the height of a tree by finding the longest path from root to leaf
+* The height of an empty tree is zero
+* adding one to maximum height of the root node's subtrees
+
+```haskell
+height Tip = 0
+height (Bin l _ r) = 1 + max (height l) (height r)
+```
+
+#### Tree Sum 
+* Given a tree of integers lets say we wanted to calculate it's sum
+* The sum of an empty tree is 0
+* The sum of a node is the sum of the left and right subtrees
+
+```haskell
+treeSum Tip = 0
+treeSum (Bin l x r) = (treeSum l) + x + (treeSum r) 
+```
+
+### BST
+* A BST is simply a tree where for any node `n` in a tree, nothing in the left subtree can be greater than `n` and nothing in the right subtree can be less than `n`.
+
+```haskell
+-- using pattern guards
+search n Tip = False
+search n (Bin l x r)
+	| n > x = search n r
+	| n < x = search n l
+	| otherwise = True
+
+-- using case
+bst_search e (Bin l x r) =
+	case compare e x of
+		LT -> bst_search e l
+		EQ -> True
+		GT -> bst_search e r
+```
+
+### Recursive Techniques 
+#### Structural Induction
+* The idea is the specify what to do for the base case (empty list) and the recursive case. Then apply the function to the tail of the list.
+* The tail always occurs as part of a recursive call
+
+##### Product
+* Given a list, we want to multiply every item in the list together
+* Base case: return 1 for an empty list since multiplying by 1 doesn't do anything
+* Recursive case: given a list with head `x` and tail `xs` we multiply `x` with the recursive call on `xs`
+
+```haskell
+product [] = 1
+product (x:xs) = x * product xs
+```
+##### Appending two lists
+* Given two lists, we want to create a new list that contains every element from the first list followed by the second list
+* Base case: both lists are empty, append an empty list
+* Recursive case:
+	* First list is not empty: let `f` be the head and `fs` be the tail of the first list, we take `f` and preprend it to the recursive call on `fs`
+	* First list is empty:  let `s` be the head and `ss` be the tail of the second list, we take `s` and preprend it to the recursive call on `ss`
+
+```haskell
+append [] [] = []
+append (f : fs) s = f : append fs s
+append [] (s : ss) = s : append [] ss	
+```
+	
+##### Zip
+* Given two lists, we want to return a single list of paired elements from the two lists
+* Base case: if any of the list are emtpy, return an empty list
+* Recursive case: given that `x` and `y` are the heads of the two lists, and `xs` and `ys` are the tails of the two lists, pair `x` and `y` and prepend it to the recursive call on `xs` and `ys`
+
+```haskell
+zip [] [] = []
+zip _ [] = []
+zip [] _ = []
+zip (x : xs) (y : ys) = (x, y) : zip xs ys
+```
+
+##### Naturals
+* Natural numbers have an inductive structure
+* Base case: zero
+* Recursive Case: successor to another number
+
+```haskell
+data Natural = Zero | Successor Natural
+
+-- 0	Zero
+-- 1 	Natural 0
+-- 2	Natural Natural 0
+-- ... 
+```
+
+##### Factorial
+* Mathematically, n! = n × (n – 1) × (n – 2) × … × 2 × 1
+* Base case: n = 0 so just return 1
+* Recursive case: return n multiplied with recursive call on n - 1
+
+```haskell
+factorial 0 = 1
+factorial n = n * factorial (n - 1)
+```
+
+##### Take
+* Take returns a list containg the first n elements of xs
+* Base case: n = 0 or the list is empty, then we return the empty list
+* Recursive case: given our list has a head `x` and a tail `xs` we return `x` followed by the recursive call on `x` and `n - 1`
+
+```haskell
+take 0 _ = []
+take _ [] = []
+take n (x : xs) = x : take (n - 1) xs
+```
+
+
+#### Accumulation
+* Structural induction is not the only way to write recursive functions
+* We can also walk through a recursive structure and gradually build up an answer
+* Similar to writing a loop
+* A loop is a recursive function
+* If loop condition holds, call itself with the next values for loop variables
+* If the loop conditions do not hold, it does whatever happens after the loop
+	* Usually returns final value
+
+##### Fibonacci
+In C
+
+```c
+int fibo (int n) {
+	int prev = 0;
+	int curr = 1;
+	while (n > 0) {
+		int temp =  curr + prev;
+		prev = curr;
+		curr = temp;
+		n--;
+	}
+	return curr
+```
+
+In Haskell
+	
+```haskell
+fiboHelper n p c
+	| n > 0 = fiboHelper n c (p + c)
+	| otherwise = c
+fibo n = fiboHelper n 0 1
+```
+
+##### Reverse
+* reversing a list works very well using a loop like style
+* walk through the list and simply prepend all encountered items to an accumulator
+
+```haskell
+reverseHelper [] acc = acc
+reverseHelper (x : xs) acc = reverseHelper xs (x : acc)
+reverse l = reverseHelper l []
+
+-- example:
+-- reverse (1:2:3:4:[])
+-- loop [] (1:2:3:4:[])
+-- loop (1:[]) (2:3:4:[])
+-- loop (2:1:[]) (3:4:[])
+-- loop (3:2:1:[]) (4:[])
+-- loop (4:3:2:1:[]) []
+-- 4:3:2:1:[]
+```
+
+##### Arithmetic Mean
+* It's really easy to calculate the mean of the list using `sum` and `length` but it requires the traversal of a list twice
+* What if we accumulate both the length and sum of a list and then calculate and return the mean at the end?
+
+```haskell
+meanHelper [] s l = s / l
+meanHelper (x : xs) s l = meanHelper xs (s + x) l + 1
+mean x = x 0 0
+```
+
+### foldr vs foldl
+* Functions can generally be written using `foldr` or `foldl`
+* More generally we are choosing between structural induction and accumulation
+* If we are only concerned about getting the answer then pick the which is convenient
+* A good compiler will turn accumulation into a loop
+* With lazy evaluation, foldr can return a partial answer before traversing the entire list
+
+### Demand
+* Values are demanded when:
+	* It is needed to make progress in a larger evaluation (branching)
+	* It is needed by a primitive function (integer addition)
+	* When it is entered into GHCi
+	* Running a compiled program evaluates a special value main 
+
+### Lazy Construction
+* Data constructors don't demand their arguments
+* Given something like `length (map expensiveFunction [1,2,3])`
+* expensiveFunction is not evaluated at all since it is not demanded
+
+### Infinite Structures
+* If we can never reach the end of a data structure, it is considered infinite
+* It will cause problems for some functions that need to look at the entire list before returning a result
+	* length
+	* sum
+	* reverse
+	* foldl
+* We can use functions that return a result after demanding a finite prefix of the list
+	* null
+	* take
+	* map
+	* zip
+	* foldr  
+
+### Strict vs Non-Strict
+* A strict function will always demand its argument
+* A non-strict function may not demand its argument
+* `(&&)` is strict because it needs to examine its first argument to determine what to do next, however it is non-strict in it's second argument
+
+### Strict vs Lazy
+* Strict and non-strict describe functions
+	* Most languages only allow defining strict functions
+	* In Haskell, functions can be strict or non-strict
+* Lazy and eager are evaluation strategies
+	* Given `f x`, the eager strategy is to evaluate `x` before calling `f`
+	* The lazy strategy is to only evaluate `x` when demanded 
+
+### Strictness in Haskell	
+* Many low-level functions are strict
+* Matching a data constructor demands the input value
+* Building up a large thunk will affect performance but not correctness
+
+### Seq
+* `seq` is primiteve so you con;t define a function that has its behavior
+* `seq` forces its first parameters to be evaluated when the result of seq is demanded
+
+### First-Class Functions
+* Functions in Haskell are values like integers and strings
+	* They can be passed as arguments to functions
+	* They can be returned from functions
+	* They can be stored in data structure
+* Examples include multiple-argument functions and higher-order functions
+* There are also functions that are used to combine other functions into new functions 
+
+### Composition
+* Lets say we have functions `f` and `g` we can apply the results of f to g
+	* Given `x` as the input we get: `g (f x)` 
+	* Lets encapsulate it in its own function `(\x -> g (f x))`
+	* This function is the composition of g and f
+* The `.` operator takes two functions and returns their composition
+* `f . g = \x -> g (f x)`
+* With composition we can build functions by linking smaller ones together
+
+### Currying
+* There are two ways to define a binary function (has two arguments)
+	* A function that takes a pair: `(a, b) -> c`
+	* A function that returns a function `a -> b -> c`
+* The two ways are equivalent
+
+### const and id
+* Useful when working with higher-order functions
+* `const :: a -> b -> b` takes two arguments and returns the second
+	* `const a b = b`
+* `id :: a -> a` takes one argument and returns it
+	* `id x = x`  
+
+### on
+* `on` takes a binary function and a unary function and returns a binary function
+* `on :: (b -> b -> c) -> (a -> b) -> (a -> a -> c)`
+* `on cmp f x y = cmp (f x) (f y)`
+
+### Map
+* `map` takes a function and a list and creates a new list by applying the function to every element in the old list
+* Every item in the input list is transformed and placed in the output list, in the same order
+* Mapping two functions over a list is the same as mapping their composition 
+
+### Functors
+* Map like functions are called *functors*
+* For some type constructor `f` they are `(a -> b) -> f a -> f b`
+* All functors have a map-like function with map properties
 
 ## Formal Languages
 
