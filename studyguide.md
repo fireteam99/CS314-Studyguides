@@ -871,8 +871,6 @@ mean x = x 0 0
 
 ### Functors
 * Map like functions are called *functors*
-* For some type constructor `f` they are `(a -> b) -> f a -> f b`
-* All functors have a map-like function with map properties
 
 ## Formal Languages
 
@@ -1203,6 +1201,80 @@ There were no new set of states introduced so we are done. To make things neater
 
 ![NFA to DFA 4](images/NFA2DFA4.png)
 
+### NFA to Simplest DFA
+This method produces the simplest possible DFA given an NFA.
+
+![NFA to Simp DFA 1](images/NFA2SDFA1.png)
+First we create a transition tables with all inputs and an epsilon closure.
+
+* From s1 we can transit to s2 with an "a" and s4 with a "c", or we can stay at s1 with 0 epsilon transitions
+* From s2 we can transit to s3 with a "b", stay at s2 with 0 epsilon transitions, or transit to s1 with 1 epsilon transition
+* From s3 we can trasit to s2 with an "a", or stay at s3 with 0 epsilon transitions
+* From s4 we can transit to s3 with a "c", stay at s4 with 0 epsilon transitions, or transit to s3 with 1 epsilon transition
+
+|    | a    | b    | c    | ε*       |
+|----|------|------|------|----------|
+| s1 | {s2} | {}   | {s4} | {s1}     |
+| s2 | {}   | {s3} | {}   | {s1, s2} |
+| s3 | {s2} | {}   | {}   | {s3}     |
+| s4 | {}   | {}   | {s3} | {s3, s4} |
+
+Now starting from our starting state s1, now find the states we can reach followed by recieving an "a", "b", or "c", and then following 0 or more epsilon transitions.
+
+
+* From s1, given an "a" we can transit to s2, then looking at ε* cell for s2, we see that we can transit to s1 and s2 which is our final answer, given a "b" we can transit no where, and given a "c" we can transit to s4 whose ε* is s3 and s4. We must now find the possible states for s1 & s2 and s3 & s4.
+* From s1 & s2, given an "a" we can transition to s1 and s2, given a "b" we can transition to s3, given a "c" we can transition to s3 & s4.
+* From s3 & s4, given an "a" we can transition to s1 and s2, given a "b" we cant go anywhere, given a "c" we can transit to s3 and s4.
+* From s3, given an "a" we can transit to s1 and s2, given a "b" we can transit nowhere, given a "c" we can transit nowhere.
+
+|         | a        | b    | c        |
+|---------|----------|------|----------|
+| s1      | {s1, s2} | {}   | {s3, s4} |
+| s1 & s2 | {s1, s2} | {s3} | {s3, s4} |
+| s3 & s4 | {s1, s2} | {}   | {s3}     |
+| s3      | {s1, s2} | {}   | {}       |
+
+With this transition table, we can create our final DFA.
+
+![NFA to Simp DFA 1](images/NFA2SDFA2.png)
+  
+### DFA to Regex
+* Given DFA, we create equations for all of their states by looking at the incoming arrows
+* Note that the arrow for the starting state corresponds to the empty string ε
+* Then simplify the equations that involve the accepting states using Arden's Theorem
+* Finally we concatenate the equations we get for the final states
+
+![DFA to regex](images/DFA2Regex.png)
+
+* Initial equations:
+	* q1 = ε + q1(0)
+		* To get to q1 we can take an null transition in the beggining, or we can accept a "0" from q1
+	* q2 = q1(1) + q2(1) 
+		* To get to q2 we can accept a "1" from q1 or accept a "1" from q2
+	* q3 = q2(0) + q3(0) + q3(1)
+		* To get to q3 we can accept a "0" from q2 or accept a "0" or "1" from q3
+
+* Final states:
+	* q1 = ε + q1(0)
+		* We can simplify this using R = Q + RP --> R = QP*
+		* q1 = R, ε = Q, R = q1, P = 0
+		* q1 = ε0*
+		* We also know that εR = R
+		* q1 = 0*
+	* q2 = q1(1) + q2(1)
+		* We can now replace q1 with 0*
+		* q2 = 0*1 + q2(1)
+		* We can simplify this using R = Q + RP --> R = QP*
+		* q2 = R, 0*1 = Q, R = q2, P = 1
+		* q2 = `0*1(1)*`
+
+* We then take the union of both final states
+	* q1 + q2
+	* `0* + 0*11*`
+	*  `0*0*11*`
+	*  We can simplify this further by removing the redundant stars: `RR* = R*`, `R*R* = R*`
+	*  `0*1*`
+
 ### NFA = DFA = Regex
 * For any RE we can construct an equivalent NFA
 * For any NFA we can construct an equivalent DFA
@@ -1315,3 +1387,9 @@ John Smith 1785  6   2
 	* Means that Johnny is eating if the thing he is eating is food.
 	* grandparent(GC, GP) :- parent(GC, P), parent(P, GP).
 	* GP is a grandparent of GC if for any P, P is a parent of GC and GP is a parent of P 
+
+### Unifiers
+* To find a unifier we attempt to find a substitution from variable names to literals.
+* To find the most general unifier, just replace all variables with literals where possible.
+* Examples:
+	* foo(X, bar), foo(baz, Q) --> foo(baz, bar)
